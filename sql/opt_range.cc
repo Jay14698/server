@@ -2663,15 +2663,21 @@ int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
   if (keys_to_use.is_clear_all() || head->is_filled_at_execution())
     DBUG_RETURN(0);
   records= head->stat_records();
+  DBUG_PRINT("info",("Time to scan table: %lu", (ulong) records));
   notnull_cond= head->notnull_cond;
   if (!records)
     records++;					/* purecov: inspected */
 
   if (head->force_index || force_quick_range)
+  {
     scan_time= read_time= DBL_MAX;
+    DBUG_PRINT("info",("Time to scan table: %g", read_time));
+  }
   else
   {
     scan_time= rows2double(records) / TIME_FOR_COMPARE;
+    DBUG_PRINT("info",("records: %lu", (ulong) records));
+    DBUG_PRINT("info",("Time to scan table: %g", scan_time));
     /*
       The 2 is there to prefer range scans to full table scans.
       This is mainly to make the test suite happy as many tests has
@@ -2679,6 +2685,7 @@ int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
       +2 has no practical effect.
     */
     read_time= (double) head->file->scan_time() + scan_time + 2;
+    DBUG_PRINT("info",("Time to scan table: %g", read_time));
     if (limit < records && read_time < (double) records + scan_time + 1 )
     {
       read_time= (double) records + scan_time + 1; // Force to use index
